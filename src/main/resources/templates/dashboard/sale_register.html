@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{dashboard/layout :: page_head}">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>POS System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        .product-section, .cart-section {
+            flex: 1;
+            margin: 10px;
+        }
+        .product-container, .cart-container {
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid #ddd;
+            padding: 5px 0;
+        }
+        .cart-item:last-child {
+            border-bottom: none;
+        }
+        .total {
+            font-weight: bold;
+        }
+        .pagination {
+            justify-content: center;
+        }
+        .quantity-input {
+            width: 60px;
+        }
+    </style>
+</head>
+<body>
+<div th:replace="~{dashboard/layout :: side_nav}"></div>
+<div class="container">
+    <div class="d-flex">
+        <!-- Product Lookup Section -->
+        <div class="product-section">
+            <div class="product-container">
+                <h3>Product Lookup</h3>
+                <form id="productForm" th:action="@{/sales}" method="post">
+                    <div class="d-flex mb-3">
+                        <input type="search" class="form-control me-2" placeholder="Search product by name" id="searchProduct" onkeyup="filterProducts()">
+                        <select class="form-select me-2" name="productId" id="productSelect">
+                            <!-- Add Thymeleaf attributes here if you are populating products dynamically -->
+                            <option th:each="product : ${products}" th:value="${product.id}" th:text="${product.name}"></option>
+                        </select>
+                        <input type="number" class="form-control me-2" name="quantity" id="quantity" placeholder="Quantity" required>
+                        <button type="button" class="btn btn-primary" onclick="addToCart()">Add</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Cart Section -->
+        <div class="cart-section">
+            <div class="cart-container">
+                <h3>Cart</h3>
+                <div id="cartItems">
+                    <!-- Cart items will be dynamically added here -->
+                </div>
+                <div class="total">
+                    Total: $<span id="totalAmount">0.00</span>
+                </div>
+                <nav>
+                    <ul class="pagination" id="paginationControls">
+                        <!-- Pagination controls will be dynamically added here -->
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+<div th:replace="fragments/scripts :: scripts"></div>
+
+<script>
+    let cart = [];
+    let totalAmount = 0;
+    const itemsPerPage = 10;
+
+    function filterProducts() {
+        const search = document.getElementById('searchProduct').value.toLowerCase();
+        const options = document.getElementById('productSelect').options;
+        for (let i = 0; i < options.length; i++) {
+            const option = options[i];
+            const text = option.text.toLowerCase();
+            option.style.display = text.includes(search) ? 'block' : 'none';
+        }
+    }
+
+    function addToCart() {
+        const productSelect = document.getElementById('productSelect');
+        const productId = productSelect.value;
+        const productName = productSelect.options[productSelect.selectedIndex].text;
+        const quantity = parseInt(document.getElementById('quantity').value, 10);
+
+        if (!quantity || quantity <= 0) {
+            alert('Please enter a valid quantity.');
+            return;
+        }
+
+        // Placeholder price, should be replaced with actual product price
+        const productPrice = 10.00;
+
+        const existingItemIndex = cart.findIndex(item => item.id === productId);
+        if (existingItemIndex >= 0) {
+            // Update existing item
+            cart[existingItemIndex].quantity += quantity;
+            cart[existingItemIndex].total = cart[existingItemIndex].quantity * productPrice;
+        } else {
+            // Add new item
+            const item = {
+                id: productId,
+                name: productName,
+                quantity: quantity,
+                price: productPrice,
+                total: quantity * productPrice
+            };
+            cart.push(item);
+        }
+
+        updateCart();
+    }
+
+    function updateCart() {
+        const cartItemsContainer = document.getElementById('cartItems');
+        const paginationControls = document.getElementById('paginationControls');
+        cartItemsContainer.innerHTML = '';
+        paginationControls.innerHTML = '';
+
+        totalAmount = 0;
+
+        const totalPages = Math.ceil(cart.length / itemsPerPage);
+
+        function renderPage(pageNumber) {
+            cartItemsContainer.innerHTML = '';
+            totalAmount = 0;
+
+            const startIndex = (pageNumber - 1) * itemsPerPage;
+            const endIndex = Math.min(startIndex + itemsPerPage, cart.length);
+
+            for (let i = startIndex; i < endIndex; i++) {
+                const item = cart[i];
+                totalAmount += item.total;
+                cartItemsContainer.innerHTML += `
+                    <div class="cart-item">
+                        <span>${item.name} (ID: ${item.id})</span>
+                        <input type="number" class="quantity-input" value="${item.quantity}" onchange="updateQuantity('${item.id}', this.value)">
+                        <span>${item.quantity} x $${item.price.toFixed(2)}</span>
+                        <button class="btn btn-danger btn-sm" onclick="removeFromCart('${item.id}')">Remove</button>
+                    </div>
+                `;
+            }
+
+            document.getElementById('totalAmount').innerText = totalAmount.toFixed(2);
+
+            // Add pagination controls
+            for (let page = 1; page <= totalPages; page++) {
+                paginationControls.innerHTML += `
+                    <li class="page-item ${page === 1 ? 'active' : ''}">
+                        <a class="page-link" href="#" onclick="renderPage(${page}); return false;">${page}</a>
+                    </li>
+                `;
+            }
+        }
+
+        renderPage(1);
+    }
+
+    function updateQuantity(productId, newQuantity) {
+        const quantity = parseInt(newQuantity, 10);
+
+        if (isNaN(quantity) || quantity <= 0) {
+            alert('Please enter a valid quantity.');
+            return;
+        }
+
+        const itemIndex = cart.findIndex(item => item.id === productId);
+        if (itemIndex >= 0) {
+            cart[itemIndex].quantity = quantity;
+            cart[itemIndex].total = quantity * cart[itemIndex].price;
+            updateCart();
+        }
+    }
+
+    function removeFromCart(productId) {
+        cart = cart.filter(item => item.id !== productId);
+        updateCart();
+    }
+
+    function resetForm() {
+        document.getElementById('productForm').reset();
+        document.getElementById('searchProduct').value = '';
+        filterProducts();
+    }
+
+    document.getElementById('productForm').addEventListener('reset', resetForm);
+</script>
+</body>
+</html>

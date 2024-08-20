@@ -1,0 +1,28 @@
+package com.jmis.JM_Store.enumerators;
+
+public enum Tags {
+    FRESH_PRODUCE,
+    DAIRY,
+    MEAT,
+    SEAFOOD,
+    BAKERY,
+    FROZEN_FOODS,
+    BEVERAGES,
+    SNACKS,
+    HOUSEHOLD_SUPPLIES,
+    PERSONAL_CARE,
+    PHARMACY,
+    PET_SUPPLIES,
+    BABY_PRODUCTS,
+    DELI,
+    INTERNATIONAL_FOODS,
+    ORGANIC,
+    CANNED_GOODS,
+    GRAINS,
+    PASTA,
+    CONDIMENTS,
+    SAUCES,
+    BAKING_SUPPLIES,
+    CLEANING_SUPPLIES,
+    FISH,
+}

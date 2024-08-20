@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{dashboard/layout :: page_head }"></head>
+<body>
+<div th:replace="~{dashboard/layout :: side_nav }"></div>
+
+<div id="content" class="container">
+    <h1 class="text-center my-4">Product List</h1>
+    <a class="btn btn-primary mb-3" href="/dashboard/new_product">Add New Product</a>
+
+    <table class="table">
+        <thead>
+        <tr>
+            <th>Image</th>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Brand</th>
+            <th>Price</th>
+            <th>Stock</th>
+            <th>Tags</th>
+            <th>Description</th>
+            <th>Vendors</th>
+            <th>Created At</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="product : ${products}">
+            <td>
+                <img th:src="@{'/images/' + ${product.imageFileName}}" alt="..." width="100">
+            </td>
+            <td th:text="${product.id}"></td>
+            <td th:text="${product.name}"></td>
+            <td th:text="${product.brand}"></td>
+            <td th:text="@{${product.price} + '₱'}"></td>
+            <td th:text="${product.stock}"></td>
+            <td>
+                <span th:each="tag : ${product.tags}" th:text="${tag.name} + ' '"></span>
+            </td>
+            <td th:text="${#strings.abbreviate(product.description, 50)}"></td>
+
+            <td>
+                <span th:each="vendor : ${product.vendors}" th:text="${vendor.name} + ' '"></span>
+            </td>
+            <td th:text="${product.createdAt.toString().substring(0, 10)}"></td>
+
+            <td style="white-space:nowrap">
+                <a class="btn btn-secondary btn-sm" th:href="@{/dashboard/products/edit/{id}(id=${product.id})}">Edit</a>
+                <a class="btn btn-danger btn-sm" th:href="@{/dashboard/products/delete/{id}(id=${product.id})}"
+                   onclick="return confirm('Are you sure?')">Delete</a>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+<div th:replace="fragments/scripts :: scripts"></div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
